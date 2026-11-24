@@ -44,25 +44,10 @@ public:
             nextState->MakeDead();
             break;
         }
-        
+
     }
 
-    std::vector<Cellule *> getNeighbors()
-    {
-        std::vector<Cellule *> neighbors;
-        for (int dx = -1; dx <= 1; ++dx)
-        {
-            for (int dy = -1; dy <= 1; ++dy)
-            {
-                if (dx == 0 && dy == 0)
-                    continue; // Skip the cell itself
-                Cellule *neighbor = parentGrid->getAt(x + dx, y + dy);
-                if (neighbor)
-                    neighbors.push_back(neighbor);
-            }
-        }
-        return neighbors;
-    }
+    std::vector<Cellule *> getNeighbors(); // défini après Grille
 
 protected:
     int x, y;           // Position in the grid
@@ -117,7 +102,26 @@ public:
             }
         }
     }
+    int getWidth() const { return width; }
+    int getHeight() const { return height; }
 };
+
+std::vector<Cellule *> Cellule::getNeighbors()
+{
+    std::vector<Cellule *> neighbors;
+    for (int dx = -1; dx <= 1; ++dx)
+    {
+        for (int dy = -1; dy <= 1; ++dy)
+        {
+            if (dx == 0 && dy == 0)
+                continue; // Skip the cell itself
+            Cellule *neighbor = parentGrid->getAt(x + dx, y + dy);
+            if (neighbor)
+                neighbors.push_back(neighbor);
+        }
+    }
+    return neighbors;
+}
 
 class CelluleVivante : public Cellule
 {
@@ -238,6 +242,15 @@ public:
         Grille &current = CurrentGrid;
         Grille &next = NextGrid;
         current.Copy(next);
+        for (int i = 0; i < current.getHeight(); ++i)
+        {
+            for (int j = 0; j < current.getWidth(); ++j)
+            {
+                Cellule *cell = current.getAt(j, i);
+                Cellule *nextCell = next.getAt(j, i);
+                cell->update(nextCell);
+            }
+        }
     }
 
     void run()
