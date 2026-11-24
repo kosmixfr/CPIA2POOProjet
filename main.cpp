@@ -214,6 +214,20 @@ public:
                  "Cocasse")
     {
         window.setFramerateLimit(60);
+        initialState();
+    }
+
+    // État initial : un planeur (glider) et un R-pentomino au centre
+    void initialState()
+    {
+        const int glider[][2] = {{1, 0}, {2, 1}, {0, 2}, {1, 2}, {2, 2}};
+        for (auto &p : glider)
+            CurrentGrid.setAlive(2 + p[0], 2 + p[1], true);
+
+        const int rPentomino[][2] = {{1, 0}, {2, 0}, {0, 1}, {1, 1}, {1, 2}};
+        int cx = CurrentGrid.getWidth() / 2, cy = CurrentGrid.getHeight() / 2;
+        for (auto &p : rPentomino)
+            CurrentGrid.setAlive(cx + p[0], cy + p[1], true);
     }
 
     void draw(sf::RenderTarget &target, float x, float y, float size) override
@@ -241,7 +255,7 @@ public:
 
         Grille &current = CurrentGrid;
         Grille &next = NextGrid;
-        current.Copy(next);
+        next.Copy(current);
         for (int i = 0; i < current.getHeight(); ++i)
         {
             for (int j = 0; j < current.getWidth(); ++j)
@@ -251,6 +265,7 @@ public:
                 cell->update(nextCell);
             }
         }
+        current.Copy(next);
     }
 
     void run()
