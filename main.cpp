@@ -3,7 +3,13 @@
 #include <numeric>
 #include <iostream>
 #include <chrono>
+#include <fstream>
+#include <sstream>
+#include <string>
 #include <SFML/Graphics.hpp>
+
+// Nombre maximal d'itérations (générations) de la simulation
+const int max_iter = 1000;
 
 class GameDrawable
 {
@@ -181,6 +187,34 @@ void Grille::setAlive(int x, int y, bool alive)
     delete old;
 }
 
+// Charge un état initial depuis un CSV : une ligne par ligne de la grille,
+// valeurs séparées par des virgules, 1 = vivante, 0 = morte.
+// Les valeurs hors de la grille sont ignorées. Retourne false si le fichier n'a pas pu être ouvert.
+bool load_grille(Grille &grille, const std::string &path)
+{
+    std::ifstream file(path);
+    if (!file)
+        return false;
+
+    std::string line;
+    int y = 0;
+    while (y < grille.getHeight() && std::getline(file, line))
+    {
+        std::istringstream lineStream(line);
+        std::string token;
+        int x = 0;
+        while (x < grille.getWidth() && std::getline(lineStream, token, ','))
+        {
+            int value = 0; // reste à 0 si le champ n'est pas un nombre
+            std::istringstream(token) >> value;
+            grille.setAlive(x, y, value != 0);
+            ++x;
+        }
+        ++y;
+    }
+    return true;
+}
+
 class Game : public GameDrawable
 {
     static constexpr float CELL = 20.f;
@@ -208,14 +242,21 @@ class Game : public GameDrawable
     }
 
 public:
-    Game(int cols, int rows)
+    // path : CSV d'état initial ; vide => état initial par défaut
+    Game(int cols, int rows, const std::string &path = "")
         : CurrentGrid(cols, rows),
           NextGrid(cols, rows),
           window(sf::VideoMode({static_cast<unsigned>(cols * CELL), static_cast<unsigned>(rows * CELL)}),
                  "Cocasse")
     {
         window.setFramerateLimit(60);
-        initialState();
+        if (path.empty())
+            initialState();
+        else if (!load_grille(CurrentGrid, path))
+        {
+            std::cerr << "Impossible d'ouvrir " << path << ", état initial par défaut utilisé" << std::endl;
+            initialState();
+        }
     }
 
     // État initial : un planeur (glider) et un R-pentomino au centre
@@ -282,9 +323,12 @@ public:
     }
 };
 
-int main()
+
+
+int main(int argc, char *argv[])
 {
-    Game game(40, 30);
+    std::string path = argc > 1 ? argv[1] : "";
+    Game game(100, 100, path);
     game.run();
     return 0;
 }
