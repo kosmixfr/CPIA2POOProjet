@@ -189,6 +189,7 @@ class Game : public GameDrawable
     Grille NextGrid;
 
     long long LastUpdateTime = 0;
+    int hz = 100000; // Update frequency in Hz
 
     sf::RenderWindow window;
 
@@ -240,7 +241,7 @@ public:
                                                            std::chrono::steady_clock::now().time_since_epoch())
                                                            .count());
 
-        if (currentTime - LastUpdateTime >= 1000)
+        if (currentTime - LastUpdateTime >= 1000 / hz)
         { // Update every second
             LastUpdateTime = currentTime;
             this->update();
